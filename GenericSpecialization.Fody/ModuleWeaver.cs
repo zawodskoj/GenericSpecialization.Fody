@@ -4,6 +4,7 @@ using System.Linq;
 using Fody;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 
 namespace GenericSpecialization.Fody
 {
@@ -60,7 +61,74 @@ namespace GenericSpecialization.Fody
         private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope)
         {
             if (typeReference == scope.GenericArgumentType) return scope.SpecializedArgumentType;
+            
+            if (typeReference is GenericInstanceType genericInstanceType)
+            {
+                return typeReference.Resolve().MakeGenericInstanceType(
+                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope)).ToArray());
+            }
+            
             return typeReference;
+        }
+        
+        private static bool CompareTypeReferences(TypeReference ref1, TypeReference ref2)
+        {
+            if (!(ref1 is GenericInstanceType git1) ||
+                !(ref2 is GenericInstanceType git2))
+                return ref1.Resolve() == ref2.Resolve();
+
+            return git1.Resolve() == git2.Resolve() &&
+                   git1.GenericArguments.Zip(git2.GenericArguments,
+                       CompareTypeReferences).All(x => x);
+        }
+        
+        private TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
+        {
+            if (self.GenericParameters.Count != arguments.Length)
+                throw new ArgumentException();
+
+            var instance = new GenericInstanceType(self);
+            foreach (var argument in arguments)
+                instance.GenericArguments.Add(argument);
+
+            return instance;
+        }
+        
+        private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self, SpecializationScope scope,
+            params TypeReference[] arguments) 
+        {
+            var reference = new MethodReference(self.Name, self.ReturnType, MakeGenericType(self.DeclaringType, arguments))
+            {
+                HasThis = self.HasThis,
+                ExplicitThis = self.ExplicitThis,
+                CallingConvention = self.CallingConvention
+            };
+
+            foreach (var parameter in self.Parameters)
+                reference.Parameters.Add(new ParameterDefinition(GetSpecializedType(parameter.ParameterType, scope)));
+
+            foreach (var genericParameter in self.GenericParameters)
+                reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
+
+            return reference;
+        }
+        
+        private MethodReference CloneMethodReference(MethodReference self, SpecializationScope scope)
+        {
+            var reference = new MethodReference(self.Name, self.ReturnType, self.DeclaringType)
+            {
+                HasThis = self.HasThis,
+                ExplicitThis = self.ExplicitThis,
+                CallingConvention = self.CallingConvention
+            };
+
+            foreach (var parameter in self.Parameters)
+                reference.Parameters.Add(new ParameterDefinition(GetSpecializedType(parameter.ParameterType, scope)));
+
+            foreach (var genericParameter in self.GenericParameters)
+                reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
+
+            return reference;
         }
         
         private MethodDefinition SpecializeMethod(MethodDefinition method, SpecializationScope scope)
@@ -89,7 +157,30 @@ namespace GenericSpecialization.Fody
                     switch (instruction.Operand)
                     {
                         case TypeReference typeref:
-                            body.Instructions.Add(Instruction.Create(instruction.OpCode, GetSpecializedType(typeref, scope)));
+                            body.Instructions.Add(Instruction.Create(instruction.OpCode,
+                                GetSpecializedType(typeref, scope)));
+                            break;
+                        case MethodReference methodref:
+                            var specializedDeclaringType = GetSpecializedType(methodref.DeclaringType, scope);
+                            var genericDeclaringType = specializedDeclaringType.Resolve();
+                            var genericMethod = genericDeclaringType
+                                .Methods.Single(x => x.Name == methodref.Name && x.Attributes == methodref.Resolve().Attributes &&
+                                                    x.Parameters.Count == methodref.Parameters.Count &&
+                                                    x.Parameters.Zip(methodref.Parameters,
+                                                         (y, z) => CompareTypeReferences(
+                                                             GetSpecializedType(y.ParameterType, scope),
+                                                             GetSpecializedType(z.ParameterType, scope))).All(y => y));
+                            if (specializedDeclaringType is GenericInstanceType genericInstanceType)
+                            {
+                                var specializedMethod = MakeGenericTypeNonGenericMethod(genericMethod, scope,
+                                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope))
+                                        .ToArray());
+                                body.Instructions.Add(Instruction.Create(instruction.OpCode, ModuleDefinition.ImportReference(specializedMethod)));
+                            }
+                            else
+                            {
+                                body.Instructions.Add(Instruction.Create(instruction.OpCode, ModuleDefinition.ImportReference(genericMethod)));
+                            }
                             break;
                         default:
                             body.Instructions.Add(instruction);
@@ -104,14 +195,6 @@ namespace GenericSpecialization.Fody
         public override IEnumerable<string> GetAssembliesForScanning()
         {
             yield return "mscorlib";
-            yield return "System";
-            yield return "System.Runtime";
-            yield return "System.Core";
-            yield return "netstandard";
-            yield return "System.Collections";
-            yield return "System.ObjectModel";
-            yield return "System.Threading";
-            yield return "FSharp.Core";
         }
     }
 

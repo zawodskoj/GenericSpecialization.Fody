@@ -50,5 +50,16 @@ namespace ImplicitResolution.Tests
             Assert.False(Instance.Method_AcceptsTwoInts_ReturnsEquality(1, 2));
             Assert.True(Instance.Method_AcceptsTwoInts_ReturnsEquality(1, 1));
         }
+        
+        [Fact]
+        public void StructuralMethod_AcceptsInt_ReturnsInt() 
+            => Assert.Equal(1337, Instance.StructuralMethod_AcceptsInt_ReturnsInt(1337));
+        
+        [Fact]
+        public void StructuralMethod_AcceptsTwoInts_ReturnsEquality()
+        {
+            Assert.False(Instance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 2));
+            Assert.True(Instance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 1));
+        }
     }
 }
