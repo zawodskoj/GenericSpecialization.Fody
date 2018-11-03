@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImplicitResolution.Tests", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImplicitResolution.AssemblyToProcess", "ImplicitResolution.AssemblyToProcess\ImplicitResolution.AssemblyToProcess.csproj", "{10B2F6B3-9382-4E1F-B309-ED222C4B4834}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericSpecialization.Fody", "GenericSpecialization.Fody\GenericSpecialization.Fody.csproj", "{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{10B2F6B3-9382-4E1F-B309-ED222C4B4834}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10B2F6B3-9382-4E1F-B309-ED222C4B4834}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10B2F6B3-9382-4E1F-B309-ED222C4B4834}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

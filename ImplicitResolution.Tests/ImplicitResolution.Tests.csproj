@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <TargetFramework>net462</TargetFramework>
 
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -14,7 +14,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\GenericSpecialization.Fody\GenericSpecialization.Fody.csproj" />
       <ProjectReference Include="..\ImplicitResolution.AssemblyToProcess\ImplicitResolution.AssemblyToProcess.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.CSharp" />
     </ItemGroup>
 
 </Project>

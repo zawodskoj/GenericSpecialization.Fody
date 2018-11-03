@@ -4,7 +4,7 @@ using System.Linq;
 using ImplicitResolution.Fody;
 
 namespace ImplicitResolution.AssemblyToProcess
-{
+{   
     [Typeclass]
     public interface IShowable<T>
     {
@@ -23,8 +23,12 @@ namespace ImplicitResolution.AssemblyToProcess
 
     public struct ListShowable<T> : IShowable<List<T>>
     {
-        // public override string Show() => $"[{string.Join(", ", That.Select(x => Implicitly.Resolve<Showable<T>>(x).Show()))}]";
-        public string Show(List<T> that) => "[\"foo\", \"bar\", \"baz\"]";
+        public string Show(List<T> that) => $"[{string.Join(", ", that.Select(x => Implicitly.Resolve<IShowable<T>>().Show(x)))}]";
+    }
+
+    public struct List2Showable : IShowable<IEnumerable<string>>
+    {
+        public string Show(IEnumerable<string> that) => $"[{string.Join(", ", that.Select(x => x))}]";
     }
         
     public class Test
