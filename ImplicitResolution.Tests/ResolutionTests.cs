@@ -24,6 +24,7 @@ namespace ImplicitResolution.Tests
             var instance = (dynamic)Activator.CreateInstance(type);
 
             Assert.Equal(true, instance.Run());
+            Assert.Equal(true, instance.RunNested());
         }
     }
 }
