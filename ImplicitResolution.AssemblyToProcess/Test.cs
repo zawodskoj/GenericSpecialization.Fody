@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Collections.Generic;
 using System.Linq;
 using ImplicitResolution.Fody;
@@ -49,4 +49,4 @@ namespace ImplicitResolution.AssemblyToProcess
             return "[\"foo\", \"bar\", \"baz\"]" == Implicitly.Resolve<IShowable<List<string>>>().Show(listv);
         }
     }
-}
+}*/
