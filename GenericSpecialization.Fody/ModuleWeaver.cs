@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Fody;
 using Mono.Cecil;
@@ -10,10 +11,31 @@ namespace GenericSpecialization.Fody
 {
     public class ModuleWeaver : BaseModuleWeaver
     {
+        private class SpecializationInfo
+        {
+            public SpecializationInfo(TypeDefinition genericClass, TypeReference specialization,
+                TypeDefinition specializedClass, Dictionary<MethodReference, MethodReference> specializedMethods)
+            {
+                GenericClass = genericClass;
+                Specialization = specialization;
+                SpecializedClass = specializedClass;
+                SpecializedMethods = specializedMethods;
+            }
+
+            public TypeDefinition GenericClass { get; }
+            public TypeReference Specialization { get; }
+            public TypeDefinition SpecializedClass { get; }
+            public Dictionary<MethodReference, MethodReference> SpecializedMethods { get; }
+        }
+        
         public override void Execute()
         {
             var generateSpecializationAttributeType =
                 ModuleDefinition.ImportReference(typeof(GenerateSpecializationAttribute)).Resolve();
+            var injectSpecializationsAttributeType =
+                ModuleDefinition.ImportReference(typeof(InjectSpecializationsAttribute)).Resolve();
+            
+            var specializations = new List<SpecializationInfo>();
             
             foreach (var type in ModuleDefinition.Types.ToArray())
             {
@@ -21,7 +43,71 @@ namespace GenericSpecialization.Fody
                     x.AttributeType.Resolve() == generateSpecializationAttributeType))
                 {
                     var typeref = (TypeReference) genAttr.ConstructorArguments[0].Value;
-                    GenerateSpecialization(type, typeref);
+                    specializations.Add(GenerateSpecialization(type, typeref));
+                }
+            }
+
+            Debugger.Launch();
+            
+            foreach (var type in ModuleDefinition.Types.ToArray())
+            {
+                if (type.CustomAttributes.Any(x => x.AttributeType.Resolve() == injectSpecializationsAttributeType))
+                {
+                    InjectSpecializations(type, specializations);
+                }
+            }
+        }
+
+        private void InjectSpecializations(TypeDefinition type, List<SpecializationInfo> specializations)
+        {
+            foreach (var method in type.Methods)
+            {
+                InjectSpecializationsInMethod(method, specializations);
+            }
+        }
+
+        private TypeReference FindSpecializedType(TypeReference type, List<SpecializationInfo> specializations)
+        {
+            if (!(type is GenericInstanceType genericInstanceType) || genericInstanceType.GenericArguments.Count != 1)
+                return type;
+            var decl = type.Resolve();
+
+            if (specializations.SingleOrDefault(x =>
+                        x.GenericClass == decl &&
+                        x.Specialization == genericInstanceType.GenericArguments[0]) is SpecializationInfo specialization)
+                return specialization.SpecializedClass;
+            else
+                return type;
+        }
+        
+        private void InjectSpecializationsInMethod(MethodDefinition method,
+            List<SpecializationInfo> specializations)
+        {
+            foreach (var local in method.Body.Variables)
+            {
+                local.VariableType = FindSpecializedType(local.VariableType, specializations);
+            }
+
+            foreach (var instruction in method.Body.Instructions)
+            {
+                switch (instruction.Operand)
+                {
+                    case TypeReference typeref:
+                        instruction.Operand = FindSpecializedType(typeref, specializations);
+                        break;
+                    case MethodReference methodref:
+                        if (!(methodref.DeclaringType is GenericInstanceType genericInstanceType)) break;
+                        var specializationArg = genericInstanceType.GenericArguments[0];
+                        instruction.Operand = ModuleDefinition.ImportReference(
+                            specializations.Select(x =>
+                                    x.SpecializedMethods.FirstOrDefault(y =>
+                                            MetadataComparer.AreSame(y.Key, methodref, true) &&
+                                            MetadataComparer.AreSame(specializationArg, x.Specialization))
+                                        is var pair && pair.Value != null
+                                        ? pair.Value
+                                        : null)
+                                .FirstOrDefault(x => x != null) ?? methodref);
+                        break;
                 }
             }
         }
@@ -38,7 +124,7 @@ namespace GenericSpecialization.Fody
             public TypeReference SpecializedArgumentType { get; }
         }
 
-        private void GenerateSpecialization(TypeDefinition type, TypeReference specializedArgument)
+        private SpecializationInfo GenerateSpecialization(TypeDefinition type, TypeReference specializedArgument)
         {
             if (!type.HasGenericParameters) throw new NotSupportedException();
             if (type.GenericParameters.Count > 1) throw new NotImplementedException();
@@ -50,12 +136,17 @@ namespace GenericSpecialization.Fody
             
             var scope = new SpecializationScope(type.GenericParameters[0], specializedArgument);
 
+            var methods = new Dictionary<MethodReference, MethodReference>();
             foreach (var method in type.Methods)
             {
-                specializedType.Methods.Add(SpecializeMethod(method, scope));
+                var newMethod = SpecializeMethod(method, scope);
+                methods.Add(method, newMethod);
+                specializedType.Methods.Add(newMethod);
             }
             
             ModuleDefinition.Types.Add(specializedType);
+
+            return new SpecializationInfo(type, specializedArgument, specializedType, methods);
         }
 
         private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope)
@@ -71,17 +162,6 @@ namespace GenericSpecialization.Fody
             return typeReference;
         }
         
-        private static bool CompareTypeReferences(TypeReference ref1, TypeReference ref2)
-        {
-            if (!(ref1 is GenericInstanceType git1) ||
-                !(ref2 is GenericInstanceType git2))
-                return ref1.Resolve() == ref2.Resolve();
-
-            return git1.Resolve() == git2.Resolve() &&
-                   git1.GenericArguments.Zip(git2.GenericArguments,
-                       CompareTypeReferences).All(x => x);
-        }
-        
         private TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
         {
             if (self.GenericParameters.Count != arguments.Length)
@@ -92,6 +172,25 @@ namespace GenericSpecialization.Fody
                 instance.GenericArguments.Add(argument);
 
             return instance;
+        }
+        
+        private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self, List<SpecializationInfo> specializations,
+            params TypeReference[] arguments) 
+        {
+            var reference = new MethodReference(self.Name, self.ReturnType, MakeGenericType(self.DeclaringType, arguments))
+            {
+                HasThis = self.HasThis,
+                ExplicitThis = self.ExplicitThis,
+                CallingConvention = self.CallingConvention
+            };
+
+            foreach (var parameter in self.Parameters)
+                reference.Parameters.Add(new ParameterDefinition(FindSpecializedType(parameter.ParameterType, specializations)));
+
+            foreach (var genericParameter in self.GenericParameters)
+                reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
+
+            return reference;
         }
         
         private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self, SpecializationScope scope,
@@ -112,7 +211,7 @@ namespace GenericSpecialization.Fody
 
             return reference;
         }
-        
+
         private MethodReference CloneMethodReference(MethodReference self, SpecializationScope scope)
         {
             var reference = new MethodReference(self.Name, self.ReturnType, self.DeclaringType)
@@ -167,7 +266,7 @@ namespace GenericSpecialization.Fody
                                 .Methods.Single(x => x.Name == methodref.Name && x.Attributes == methodref.Resolve().Attributes &&
                                                     x.Parameters.Count == methodref.Parameters.Count &&
                                                     x.Parameters.Zip(methodref.Parameters,
-                                                         (y, z) => CompareTypeReferences(
+                                                         (y, z) => MetadataComparer.AreSame(
                                                              GetSpecializedType(y.ParameterType, scope),
                                                              GetSpecializedType(z.ParameterType, scope))).All(y => y));
                             if (specializedDeclaringType is GenericInstanceType genericInstanceType)
@@ -208,4 +307,7 @@ namespace GenericSpecialization.Fody
             SpecializationType = specializationType;
         }
     }
+    
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+    public class InjectSpecializationsAttribute : Attribute {}
 }
