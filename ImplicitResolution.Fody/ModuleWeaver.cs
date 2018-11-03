@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using Fody;
@@ -9,98 +10,136 @@ using Mono.Cecil.Rocks;
 
 namespace ImplicitResolution.Fody
 {
+    internal class TypeclassDeclaration
+    {
+        public TypeclassDeclaration(TypeDefinition baseType, TypeDefinition implementationType, TypeReference instanceType)
+        {
+            BaseType = baseType;
+            ImplementationType = implementationType;
+            InstanceType = instanceType;
+        }
+
+        public TypeDefinition BaseType { get; }
+        public TypeDefinition ImplementationType { get; }
+        public TypeReference InstanceType { get; }
+    }
+    
     /// <inheritdoc />
     public class ModuleWeaver : BaseModuleWeaver
     {
-        /// <inheritdoc />
-        public override void Execute()
+        private MethodDefinition _resolveMethod;
+        private TypeDefinition _typeclassAttributeType;
+
+        private readonly List<TypeclassDeclaration> _typeclasses =
+            new List<TypeclassDeclaration>();
+
+        private void Initialize()
         {
-            var resolveMethod = 
+            _resolveMethod = 
                 ModuleDefinition.ImportReference(typeof(Implicitly)).Resolve().Methods.First(x => x.Name == "Resolve");
 
-            var baseTypeclass = 
-                ModuleDefinition.ImportReference(typeof(Typeclass<>)).Resolve();
+            _typeclassAttributeType = ModuleDefinition.ImportReference(typeof(TypeclassAttribute)).Resolve();
+        }
 
-            var objectType = ModuleDefinition.TypeSystem.Object;
+        private IEnumerable<TypeDefinition> CollectAllTypes(IEnumerable<TypeDefinition> definitions = null)
+        {
+            foreach (var type in definitions ?? ModuleDefinition.Types)
+            {
+                yield return type;
+                foreach (var inside in CollectAllTypes(type.NestedTypes))
+                    yield return inside;
+            }
+        }
 
-            var typeclasses = new Dictionary<TypeReference, TypeDefinition>();
-
-            foreach (var type in ModuleDefinition.Types)
+        private bool CollectTypeclasses()
+        {
+            foreach (var type in CollectAllTypes())
             {
                 if (type.IsAbstract) continue;
-
-                var t = type.BaseType;
-                TypeReference tp = type;
-                while (t != objectType && t != null)
+                foreach (var typeclassInterface in type.Interfaces.Where(x =>
+                    x.InterfaceType.Resolve().CustomAttributes
+                        .Any(y => y.AttributeType.Resolve() == _typeclassAttributeType)))
                 {
-                    if (t.Resolve() == baseTypeclass)
-                    {
-                        typeclasses.Add(tp, type);
-                        break;
-                    }
-
-                    tp = t;
-                    t = t.Resolve().BaseType;
+                    _typeclasses.Add(new TypeclassDeclaration(typeclassInterface.InterfaceType.Resolve(), type,
+                        ((GenericInstanceType) typeclassInterface.InterfaceType).GenericArguments[0]));   
                 }
             }
 
-            try
+            return true;
+        }
+
+        private bool WeaveMethod(MethodDefinition method)
+        {
+            if (method.Body == null) return true;
+
+            var ilproc = method.Body.GetILProcessor();
+
+            while (true)
             {
-
-                foreach (var type in ModuleDefinition.Types)
+                foreach (var instruction in method.Body.Instructions)
                 {
-                    foreach (var method in type.Methods)
+                    if (instruction.OpCode.Code == Code.Call &&
+                        instruction.Operand is GenericInstanceMethod calledMethod)
                     {
-                        if (method.Body == null) continue;
-
-                        var ilproc = method.Body.GetILProcessor();
-
-                        while (true)
+                        var resolved = calledMethod.Resolve();
+                        if (resolved.GetBaseMethod() == _resolveMethod)
                         {
-                            foreach (var instruction in method.Body.Instructions)
+                            bool CompareRefs(TypeReference ref1, TypeReference ref2)
                             {
-                                if (instruction.OpCode.Code == Code.Call &&
-                                    instruction.Operand is GenericInstanceMethod calledMethod)
-                                {
-                                    var resolved = calledMethod.Resolve();
-                                    if (resolved.GetBaseMethod() == resolveMethod)
-                                    {
-                                        bool CompareRefs(TypeReference ref1, TypeReference ref2)
-                                        {
-                                            if (!(ref1 is GenericInstanceType git1) ||
-                                                !(ref2 is GenericInstanceType git2))
-                                                return ref1.Resolve() == ref2.Resolve();
+                                if (!(ref1 is GenericInstanceType git1) ||
+                                    !(ref2 is GenericInstanceType git2))
+                                    return ref1.Resolve() == ref2.Resolve();
 
-                                            return git1.Resolve() == git2.Resolve() &&
-                                                   git1.GenericArguments.Zip(git2.GenericArguments,
-                                                       CompareRefs).All(x => x);
-                                        }
-                                        
-                                        var typeclassType = (GenericInstanceType) calledMethod.GenericArguments[0];
-                                        var typeclass = typeclasses.Single(x => CompareRefs(x.Key, typeclassType)).Value;
-                                        var instanceType = typeclassType.GenericArguments[0];
-                                        var ctor = typeclass.GetConstructors()
-                                            .Single(x => x.Parameters.Count == 1 && CompareRefs(x.Parameters[0].ParameterType, instanceType));
-                                        
-                                        if (instruction.Previous.OpCode.Code == Code.Box) ilproc.Remove(instruction.Previous);
-                                        ilproc.Replace(instruction, Instruction.Create(OpCodes.Newobj, ctor));
-
-                                        goto cont;
-                                    }
-                                }
+                                return git1.Resolve() == git2.Resolve() &&
+                                       git1.GenericArguments.Zip(git2.GenericArguments,
+                                           CompareRefs).All(x => x);
                             }
-                            
-                            break;
 
-                            cont: ;
+                            var typeclassType = (GenericInstanceType) calledMethod.GenericArguments[0];
+                            var typeclass = _typeclasses.Single(x => typeclassType.Resolve() == x.BaseType &&
+                                                                     CompareRefs(typeclassType.GenericArguments[0], x.InstanceType)).ImplementationType;
+                            
+                            var vardef = new VariableDefinition(typeclass);
+                            method.Body.Variables.Add(vardef);
+
+                            if (instruction.Previous.OpCode.Code == Code.Box) ilproc.Remove(instruction.Previous);
+                            ilproc.InsertBefore(instruction, Instruction.Create(OpCodes.Ldloca, vardef));
+                            ilproc.InsertAfter(instruction, Instruction.Create(OpCodes.Box, typeclass));
+                            ilproc.InsertAfter(instruction, Instruction.Create(OpCodes.Ldloca, vardef));
+                            ilproc.Replace(instruction, Instruction.Create(OpCodes.Initobj, typeclass));
+
+                            goto cont;
                         }
                     }
                 }
+
+                break;
+
+                cont: ;
             }
-            catch (Exception e)
+
+            return true;
+        }
+
+        private void WeaveTypes()
+        {
+            foreach (var type in CollectAllTypes())
             {
-                
+                foreach (var method in type.Methods)
+                {
+                    if (!WeaveMethod(method)) return;
+                }
             }
+        }
+        
+        /// <inheritdoc />
+        public override void Execute()
+        {
+            //Debugger.Launch();
+            
+            Initialize();
+            if (!CollectTypeclasses()) return;
+            WeaveTypes();
         }
 
         public override IEnumerable<string> GetAssembliesForScanning()
@@ -116,25 +155,13 @@ namespace ImplicitResolution.Fody
             yield return "FSharp.Core";
         }
     }
-
-    public abstract class Typeclass
-    {
-        internal Typeclass() {}
-    }
-
-    public abstract class Typeclass<T> : Typeclass
-    {
-        public T That { get; }
-        
-        public Typeclass(T that)
-        {
-            That = that;
-        }
-    }
-
+    
+    [AttributeUsage(AttributeTargets.Interface)]
+    public class TypeclassAttribute : Attribute {}
+    
     public static class Implicitly
     {
-        public static TTypeclass Resolve<TTypeclass>(object instance) where TTypeclass : Typeclass
+        public static TTypeclass Resolve<TTypeclass>()
             => throw new Exception("Not weaved"); 
     }
 }

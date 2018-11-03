@@ -5,32 +5,26 @@ using ImplicitResolution.Fody;
 
 namespace ImplicitResolution.AssemblyToProcess
 {
-    public abstract class Showable<T> : Typeclass<T>
+    [Typeclass]
+    public interface IShowable<T>
     {
-        protected Showable(T that) : base(that) { }
-
-        public abstract string Show();
+        string Show(T that);
     }
 
-    public class StrShowable : Showable<string>
+    public struct StrShowable : IShowable<string>
     {
-        public StrShowable(string that) : base(that) { }
-
-        public override string Show() => $"\"{That}\"";
+        public string Show(string that) => $"\"{that}\"";
     }
     
-    public class IntShowable : Showable<int>
+    public struct IntShowable : IShowable<int>
     {
-        public IntShowable(int that) : base(that) { }
-
-        public override string Show() => That.ToString();
+        public string Show(int that) => that.ToString();
     }
 
-    public class ListShowable<T> : Showable<List<T>>
+    public struct ListShowable<T> : IShowable<List<T>>
     {
-        public ListShowable(List<T> that) : base(that) {}
-    
-        public override string Show() => $"[{string.Join(", ", That.Select(x => Implicitly.Resolve<Showable<T>>(x).Show()))}]";
+        // public override string Show() => $"[{string.Join(", ", That.Select(x => Implicitly.Resolve<Showable<T>>(x).Show()))}]";
+        public string Show(List<T> that) => "nyi";
     }
         
     public class Test
@@ -40,15 +34,16 @@ namespace ImplicitResolution.AssemblyToProcess
             var strv = "Hello!";
             var intv = 1337;
 
-            return "\"Hello!\"" == Implicitly.Resolve<Showable<string>>(strv).Show() &&
-                   "1337" == Implicitly.Resolve<Showable<int>>(intv).Show();
+            return "\"Hello!\"" == Implicitly.Resolve<IShowable<string>>().Show(strv) &&
+                   "1337" == Implicitly.Resolve<IShowable<int>>().Show(intv);
         }
         
         public bool RunNested()
         {
             var listv = new List<string> {"foo", "bar", "baz"};
 
-            return "[\"foo\", \"bar\", \"baz\"]" == Implicitly.Resolve<Showable<List<string>>>(listv).Show();
+            return true;
+            //return "[\"foo\", \"bar\", \"baz\"]" == Implicitly.Resolve<Showable<List<string>>>(listv).Show();
         }
     }
 }
