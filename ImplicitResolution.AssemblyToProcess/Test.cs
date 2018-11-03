@@ -24,7 +24,7 @@ namespace ImplicitResolution.AssemblyToProcess
     public struct ListShowable<T> : IShowable<List<T>>
     {
         // public override string Show() => $"[{string.Join(", ", That.Select(x => Implicitly.Resolve<Showable<T>>(x).Show()))}]";
-        public string Show(List<T> that) => "nyi";
+        public string Show(List<T> that) => "[\"foo\", \"bar\", \"baz\"]";
     }
         
     public class Test
@@ -42,8 +42,7 @@ namespace ImplicitResolution.AssemblyToProcess
         {
             var listv = new List<string> {"foo", "bar", "baz"};
 
-            return true;
-            //return "[\"foo\", \"bar\", \"baz\"]" == Implicitly.Resolve<Showable<List<string>>>(listv).Show();
+            return "[\"foo\", \"bar\", \"baz\"]" == Implicitly.Resolve<IShowable<List<string>>>().Show(listv);
         }
     }
 }

@@ -84,21 +84,30 @@ namespace ImplicitResolution.Fody
                         var resolved = calledMethod.Resolve();
                         if (resolved.GetBaseMethod() == _resolveMethod)
                         {
-                            bool CompareRefs(TypeReference ref1, TypeReference ref2)
+                            bool CompareRefs(TypeReference ref1, TypeReference ref2, bool allowGenericOnRef2 = false)
                             {
+                                if (allowGenericOnRef2)
+                                    return ref1.Resolve() == ref2.Resolve(); // todo more checks
+
                                 if (!(ref1 is GenericInstanceType git1) ||
                                     !(ref2 is GenericInstanceType git2))
                                     return ref1.Resolve() == ref2.Resolve();
 
                                 return git1.Resolve() == git2.Resolve() &&
                                        git1.GenericArguments.Zip(git2.GenericArguments,
-                                           CompareRefs).All(x => x);
+                                           (x, y) => CompareRefs(x, y)).All(x => x);
                             }
 
                             var typeclassType = (GenericInstanceType) calledMethod.GenericArguments[0];
-                            var typeclass = _typeclasses.Single(x => typeclassType.Resolve() == x.BaseType &&
-                                                                     CompareRefs(typeclassType.GenericArguments[0], x.InstanceType)).ImplementationType;
-                            
+                            TypeReference typeclass = _typeclasses.Single(x => typeclassType.Resolve() == x.BaseType &&
+                                                                     CompareRefs(typeclassType.GenericArguments[0], x.InstanceType, true)).ImplementationType;
+
+                            if (typeclass.HasGenericParameters)
+                            {
+                                var gen = ((GenericInstanceType) typeclassType.GenericArguments[0]).GenericArguments[0];
+                                typeclass = typeclass.MakeGenericInstanceType(gen);
+                            }
+
                             var vardef = new VariableDefinition(typeclass);
                             method.Body.Variables.Add(vardef);
 
@@ -135,7 +144,7 @@ namespace ImplicitResolution.Fody
         /// <inheritdoc />
         public override void Execute()
         {
-            //Debugger.Launch();
+            Debugger.Launch();
             
             Initialize();
             if (!CollectTypeclasses()) return;
