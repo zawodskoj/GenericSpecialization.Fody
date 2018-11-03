@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Fody" Version="3.2.16" />
+      <PackageReference Include="FodyHelpers" Version="3.2.16" />
+      <PackageReference Include="FodyPackaging" Version="3.2.16" />
+    </ItemGroup>
+    
+    <Target Name="CopyPackage" AfterTargets="Build">
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)\packages\ImplicitResolution.Fody.1.0.0" />
+    </Target>
+</Project>
