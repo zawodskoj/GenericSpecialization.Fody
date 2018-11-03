@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Fody;
 using ImplicitResolution.AssemblyToProcess;
 using ImplicitResolution.Fody;
@@ -8,7 +9,8 @@ namespace ImplicitResolution.Tests
 {
     public class GenericSpecializationTests
     {
-        private static readonly dynamic SpecializedInstance, NotSpecializedInstance;
+        public static readonly dynamic SpecializedInstance, NotSpecializedInstance;
+        public static IEnumerable<object[]> Instances;
 
         static GenericSpecializationTests()
         {
@@ -22,88 +24,49 @@ namespace ImplicitResolution.Tests
             
             var notSpecType = testResult.Assembly.GetType("ImplicitResolution.AssemblyToProcess.GenericSpecializationTest_NotSpecialized");
             NotSpecializedInstance = Activator.CreateInstance(notSpecType);
+
+            Instances = new[] {new[]{SpecializedInstance}, new[] {NotSpecializedInstance}};
         }
         
-        [Fact]
-        public void Specialized_Method_AcceptsString() 
-            => SpecializedInstance.Method_AcceptsString();
+        [Theory, MemberData(nameof(Instances))]
+        public void Method_AcceptsString(dynamic instance) 
+            => instance.Method_AcceptsString();
         
-        [Fact]
-        public void Specialized_Method_AcceptsString_ReturnsString() 
-            => Assert.Equal("Test", SpecializedInstance.Method_AcceptsString_ReturnsString("Test"));
+        [Theory, MemberData(nameof(Instances))]
+        public void Method_AcceptsString_ReturnsString(dynamic instance) 
+            => Assert.Equal("Test", instance.Method_AcceptsString_ReturnsString("Test"));
         
-        [Fact]
-        public void Specialized_Method_AcceptsTwoStrings_ReturnsEquality()
+        [Theory, MemberData(nameof(Instances))]
+        public void Method_AcceptsTwoStrings_ReturnsEquality(dynamic instance)
         {
-            Assert.False(SpecializedInstance.Method_AcceptsTwoStrings_ReturnsEquality("Test1", "Test2"));
-            Assert.True(SpecializedInstance.Method_AcceptsTwoStrings_ReturnsEquality("Test", "Test"));
+            Assert.False(instance.Method_AcceptsTwoStrings_ReturnsEquality("Test1", "Test2"));
+            Assert.True(instance.Method_AcceptsTwoStrings_ReturnsEquality("Test", "Test"));
         }
 
-        [Fact]
-        public void Specialized_Method_AcceptsInt()
-            => SpecializedInstance.Method_AcceptsInt();
+        [Theory, MemberData(nameof(Instances))]
+        public void Method_AcceptsInt(dynamic instance)
+            => instance.Method_AcceptsInt();
         
-        [Fact]
-        public void Specialized_Method_AcceptsInt_ReturnsInt() 
-            => Assert.Equal(1337, SpecializedInstance.Method_AcceptsInt_ReturnsInt(1337));
+        [Theory, MemberData(nameof(Instances))]
+        public void Method_AcceptsInt_ReturnsInt(dynamic instance)
+            => Assert.Equal(1337, instance.Method_AcceptsInt_ReturnsInt(1337));
         
-        [Fact]
-        public void Specialized_Method_AcceptsTwoInts_ReturnsEquality()
+        [Theory, MemberData(nameof(Instances))]
+        public void Method_AcceptsTwoInts_ReturnsEquality(dynamic instance)
         {
-            Assert.False(SpecializedInstance.Method_AcceptsTwoInts_ReturnsEquality(1, 2));
-            Assert.True(SpecializedInstance.Method_AcceptsTwoInts_ReturnsEquality(1, 1));
+            Assert.False(instance.Method_AcceptsTwoInts_ReturnsEquality(1, 2));
+            Assert.True(instance.Method_AcceptsTwoInts_ReturnsEquality(1, 1));
         }
         
-        [Fact]
-        public void Specialized_StructuralMethod_AcceptsInt_ReturnsInt() 
-            => Assert.Equal(1337, SpecializedInstance.StructuralMethod_AcceptsInt_ReturnsInt(1337));
+        [Theory, MemberData(nameof(Instances))]
+        public void StructuralMethod_AcceptsInt_ReturnsInt(dynamic instance) 
+            => Assert.Equal(1337, instance.StructuralMethod_AcceptsInt_ReturnsInt(1337));
         
-        [Fact]
-        public void Specialized_StructuralMethod_AcceptsTwoInts_ReturnsEquality()
+        [Theory, MemberData(nameof(Instances))]
+        public void StructuralMethod_AcceptsTwoInts_ReturnsEquality(dynamic instance)
         {
-            Assert.False(SpecializedInstance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 2));
-            Assert.True(SpecializedInstance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 1));
-        }
-        
-        [Fact]
-        public void NotSpecialized_Method_AcceptsString() 
-            => NotSpecializedInstance.Method_AcceptsString();
-        
-        [Fact]
-        public void NotSpecialized_Method_AcceptsString_ReturnsString() 
-            => Assert.Equal("Test", NotSpecializedInstance.Method_AcceptsString_ReturnsString("Test"));
-        
-        [Fact]
-        public void NotSpecialized_Method_AcceptsTwoStrings_ReturnsEquality()
-        {
-            Assert.False(NotSpecializedInstance.Method_AcceptsTwoStrings_ReturnsEquality("Test1", "Test2"));
-            Assert.True(NotSpecializedInstance.Method_AcceptsTwoStrings_ReturnsEquality("Test", "Test"));
-        }
-
-        [Fact]
-        public void NotSpecialized_Method_AcceptsInt()
-            => NotSpecializedInstance.Method_AcceptsInt();
-        
-        [Fact]
-        public void NotSpecialized_Method_AcceptsInt_ReturnsInt() 
-            => Assert.Equal(1337, NotSpecializedInstance.Method_AcceptsInt_ReturnsInt(1337));
-        
-        [Fact]
-        public void NotSpecialized_Method_AcceptsTwoInts_ReturnsEquality()
-        {
-            Assert.False(NotSpecializedInstance.Method_AcceptsTwoInts_ReturnsEquality(1, 2));
-            Assert.True(NotSpecializedInstance.Method_AcceptsTwoInts_ReturnsEquality(1, 1));
-        }
-        
-        [Fact]
-        public void NotSpecialized_StructuralMethod_AcceptsInt_ReturnsInt() 
-            => Assert.Equal(1337, NotSpecializedInstance.StructuralMethod_AcceptsInt_ReturnsInt(1337));
-        
-        [Fact]
-        public void NotSpecialized_StructuralMethod_AcceptsTwoInts_ReturnsEquality()
-        {
-            Assert.False(NotSpecializedInstance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 2));
-            Assert.True(NotSpecializedInstance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 1));
+            Assert.False(instance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 2));
+            Assert.True(instance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 1));
         }
     }
 }
