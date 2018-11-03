@@ -76,12 +76,13 @@ namespace ImplicitResolution.Fody
                                                        CompareRefs).All(x => x);
                                         }
                                         
-                                        var typeclassType = (GenericInstanceType) calledMethod.GenericArguments[1];
+                                        var typeclassType = (GenericInstanceType) calledMethod.GenericArguments[0];
                                         var typeclass = typeclasses.Single(x => CompareRefs(x.Key, typeclassType)).Value;
                                         var instanceType = typeclassType.GenericArguments[0];
                                         var ctor = typeclass.GetConstructors()
                                             .Single(x => x.Parameters.Count == 1 && CompareRefs(x.Parameters[0].ParameterType, instanceType));
                                         
+                                        if (instruction.Previous.OpCode.Code == Code.Box) ilproc.Remove(instruction.Previous);
                                         ilproc.Replace(instruction, Instruction.Create(OpCodes.Newobj, ctor));
 
                                         goto cont;
@@ -116,7 +117,12 @@ namespace ImplicitResolution.Fody
         }
     }
 
-    public abstract class Typeclass<T>
+    public abstract class Typeclass
+    {
+        internal Typeclass() {}
+    }
+
+    public abstract class Typeclass<T> : Typeclass
     {
         public T That { get; }
         
@@ -128,7 +134,7 @@ namespace ImplicitResolution.Fody
 
     public static class Implicitly
     {
-        public static TTypeclass Resolve<T, TTypeclass>(T instance) where TTypeclass : Typeclass<T>
+        public static TTypeclass Resolve<TTypeclass>(object instance) where TTypeclass : Typeclass
             => throw new Exception("Not weaved"); 
     }
 }

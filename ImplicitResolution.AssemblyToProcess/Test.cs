@@ -1,4 +1,5 @@
-﻿using ImplicitResolution.Fody;
+﻿using System;
+using ImplicitResolution.Fody;
 
 namespace ImplicitResolution.AssemblyToProcess
 {
@@ -29,9 +30,9 @@ namespace ImplicitResolution.AssemblyToProcess
         {
             var strv = "Hello!";
             var intv = 1337;
-            
-            return "Hello!" == Implicitly.Resolve<string, Showable<string>>(strv).Show() &&
-                   "1337" == Implicitly.Resolve<int, Showable<int>>(intv).Show();
+
+            return "Hello!" == Implicitly.Resolve<Showable<string>>(strv).Show() &&
+                   "1337" == Implicitly.Resolve<Showable<int>>(intv).Show();
         }
     }
 }
