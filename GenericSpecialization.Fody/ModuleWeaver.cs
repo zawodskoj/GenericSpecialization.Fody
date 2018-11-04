@@ -295,6 +295,13 @@ namespace GenericSpecialization.Fody
             }
         }
         
+        private TypeReference GetValidTypeForGenericScope(TypeReference typeref, IGenericParameterProvider oldOwner,
+            IEnumerable<GenericParameter> parameters, SpecializationScope scope)
+        {
+            return
+                GetValidTypeForGenericScope(GetValidTypeForGenericScope(GetSpecializedType(typeref, scope), oldOwner, parameters), scope);
+        }
+        
         private MethodDefinition SpecializeMethod(MethodDefinition method, SpecializationScope scope)
         {
             var newMethod = new MethodDefinition(method.Name, method.Attributes, GetSpecializedType(method.ReturnType, scope));
@@ -304,18 +311,15 @@ namespace GenericSpecialization.Fody
                 newMethod.GenericParameters.Add(new GenericParameter(genericParameter.Name, newMethod));
             }
 
-            newMethod.ReturnType = GetValidTypeForGenericScope(newMethod.ReturnType, method, newMethod.GenericParameters);
-            newMethod.ReturnType = GetValidTypeForGenericScope(newMethod.ReturnType, scope);
+            newMethod.ReturnType = GetValidTypeForGenericScope(newMethod.ReturnType, method, newMethod.GenericParameters, scope);
             
             foreach (var parameter in method.Parameters)
             {
                 newMethod.Parameters.Add(
                     new ParameterDefinition(
-                        parameter.Name, 
-                        parameter.Attributes, 
-                        GetValidTypeForGenericScope(
-                            GetValidTypeForGenericScope(GetSpecializedType(parameter.ParameterType, scope), method, newMethod.GenericParameters),
-                            scope)));
+                        parameter.Name,
+                        parameter.Attributes,
+                        GetValidTypeForGenericScope(parameter.ParameterType, method, newMethod.GenericParameters, scope)));
             }
 
             if (!method.IsAbstract)
@@ -329,22 +333,23 @@ namespace GenericSpecialization.Fody
                     {
                         case TypeReference typeref:
                             body.Instructions.Add(Instruction.Create(instruction.OpCode,
-                                GetSpecializedType(typeref, scope)));
+                                GetValidTypeForGenericScope(typeref, method, newMethod.GenericParameters, scope)));
                             break;
                         case MethodReference methodref:
-                            var specializedDeclaringType = GetSpecializedType(methodref.DeclaringType, scope);
+                            var specializedDeclaringType = 
+                                GetValidTypeForGenericScope(methodref.DeclaringType, method, newMethod.GenericParameters, scope);
                             var genericDeclaringType = specializedDeclaringType.Resolve();
                             var genericMethod = genericDeclaringType
                                 .Methods.Single(x => x.Name == methodref.Name && x.Attributes == methodref.Resolve().Attributes &&
                                                     x.Parameters.Count == methodref.Parameters.Count &&
                                                     x.Parameters.Zip(methodref.Parameters,
                                                          (y, z) => MetadataComparer.AreSame(
-                                                             GetSpecializedType(y.ParameterType, scope),
-                                                             GetSpecializedType(z.ParameterType, scope))).All(y => y));
+                                                             GetValidTypeForGenericScope(y.ParameterType, method, newMethod.GenericParameters, scope),
+                                                             GetValidTypeForGenericScope(z.ParameterType, method, newMethod.GenericParameters, scope))).All(y => y));
                             if (specializedDeclaringType is GenericInstanceType genericInstanceType)
                             {
                                 var specializedMethod = MakeGenericTypeNonGenericMethod(genericMethod, scope,
-                                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope))
+                                    genericInstanceType.GenericArguments.Select(x => GetValidTypeForGenericScope(x, method, newMethod.GenericParameters, scope))
                                         .ToArray());
                                 body.Instructions.Add(Instruction.Create(instruction.OpCode, ModuleDefinition.ImportReference(specializedMethod)));
                             }
