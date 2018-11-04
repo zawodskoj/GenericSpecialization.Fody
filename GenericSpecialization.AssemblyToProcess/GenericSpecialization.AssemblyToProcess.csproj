@@ -6,7 +6,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\GenericSpecialization.Fody\GenericSpecialization.Fody.csproj" />
-      <ProjectReference Include="..\ImplicitResolution.Fody\ImplicitResolution.Fody.csproj" />
+      <ProjectReference Include="..\GenericSpecialization.Fody\GenericSpecialization.Fody.csproj" />
     </ItemGroup>
 
 </Project>

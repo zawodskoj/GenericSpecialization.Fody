@@ -15,7 +15,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\GenericSpecialization.Fody\GenericSpecialization.Fody.csproj" />
-      <ProjectReference Include="..\ImplicitResolution.AssemblyToProcess\ImplicitResolution.AssemblyToProcess.csproj" />
+      <ProjectReference Include="..\GenericSpecialization.AssemblyToProcess\GenericSpecialization.AssemblyToProcess.csproj" />
     </ItemGroup>
 
     <ItemGroup>

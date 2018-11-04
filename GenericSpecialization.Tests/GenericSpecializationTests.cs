@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Fody;
-using ImplicitResolution.AssemblyToProcess;
-using ImplicitResolution.Fody;
 using Xunit;
 
-namespace ImplicitResolution.Tests
+namespace GenericSpecialization.Tests
 {
     public class GenericSpecializationTests
     {

@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using GenericSpecialization.Fody;
-using ImplicitResolution.Fody;
 
 namespace ImplicitResolution.AssemblyToProcess
 {
