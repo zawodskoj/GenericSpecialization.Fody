@@ -12,15 +12,15 @@ namespace GenericSpecialization.Tests
 
         static GenericSpecializationTests()
         {
-            var weavingTask = new GenericSpecialization.Fody.ModuleWeaver();
+            var weavingTask = new Fody.ModuleWeaver();
             var testResult = weavingTask.ExecuteTestRun(
-                "C:\\Users\\miair\\RiderProjects\\ImplicitResolution\\ImplicitResolution.Tests\\bin\\Debug\\net462\\ImplicitResolution.AssemblyToProcess.dll",
+                "GenericSpecialization.AssemblyToProcess.dll",
                 false);
             
-            var specType = testResult.Assembly.GetType("ImplicitResolution.AssemblyToProcess.GenericSpecializationTest_Specialized");
+            var specType = testResult.Assembly.GetType("GenericSpecialization.AssemblyToProcess.GenericSpecializationTest_Specialized");
             SpecializedInstance = Activator.CreateInstance(specType);
             
-            var notSpecType = testResult.Assembly.GetType("ImplicitResolution.AssemblyToProcess.GenericSpecializationTest_NotSpecialized");
+            var notSpecType = testResult.Assembly.GetType("GenericSpecialization.AssemblyToProcess.GenericSpecializationTest_NotSpecialized");
             NotSpecializedInstance = Activator.CreateInstance(notSpecType);
 
             Instances = new[] {new[]{SpecializedInstance}, new[] {NotSpecializedInstance}};

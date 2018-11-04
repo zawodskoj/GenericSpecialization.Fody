@@ -1,7 +1,7 @@
 ﻿using System;
 using GenericSpecialization.Fody;
 
-namespace ImplicitResolution.AssemblyToProcess
+namespace GenericSpecialization.AssemblyToProcess
 {
     [GenerateSpecialization(typeof(int))]
     [GenerateSpecialization(typeof(string))]
