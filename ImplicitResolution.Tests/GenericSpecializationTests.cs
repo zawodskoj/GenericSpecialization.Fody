@@ -84,5 +84,102 @@ namespace ImplicitResolution.Tests
             Assert.False(instance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 2));
             Assert.True(instance.StructuralMethod_AcceptsTwoInts_ReturnsEquality(1, 1));
         }
+
+        
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethod_AcceptsInt_ReturnsInt(dynamic instance)
+        {
+            Assert.Equal(1337, instance.NestedMethod_AcceptsInt_ReturnsInt(1337));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethod_AcceptsOverlappedInt_ReturnsInt(dynamic instance)
+        {
+            Assert.Equal(1337, instance.NestedMethod_AcceptsOverlappedInt_ReturnsInt(1337));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethod_AcceptsOverlappeString_ReturnsString(dynamic instance)
+        {
+            Assert.Equal("foobar", instance.NestedMethod_AcceptsOverlappeString_ReturnsString("foobar"));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethod_AcceptsTwoInts_ReturnsEquality(dynamic instance)
+        {
+            Assert.True(instance.NestedMethod_AcceptsTwoInts_ReturnsEquality(1337, 31337));
+            Assert.False(instance.NestedMethod_AcceptsTwoInts_ReturnsEquality(1337, 1337));
+        }
+        
+        
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithOverlappedT_AcceptsInt_ReturnsInt(dynamic instance)
+        {
+            Assert.Equal(1337, instance.NestedMethodWithOverlappedT_AcceptsInt_ReturnsInt(1337));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithOverlappedT_AcceptsOverlappedInt_ReturnsInt(dynamic instance)
+        {
+            Assert.Equal(1337, instance.NestedMethodWithOverlappedT_AcceptsOverlappedInt_ReturnsInt(1337));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithOverlappedT_AcceptsOverlappeString_ReturnsString(dynamic instance)
+        {
+            Assert.Equal("foobar", instance.NestedMethodWithOverlappedT_AcceptsOverlappeString_ReturnsString("foobar"));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(dynamic instance)
+        {
+            Assert.True(instance.NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 31337));
+            Assert.False(instance.NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 1337));
+        }
+        
+        
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsString_ReturnsString(dynamic instance)
+        {
+            Assert.Equal("foobar", instance.NestedMethodWithNonOverlappedT_AcceptsString_ReturnsString("foobar"));
+        }
+        
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsInt_ReturnsInt(dynamic instance)
+        {
+            Assert.Equal(1337, instance.NestedMethodWithNonOverlappedT_AcceptsInt_ReturnsInt(1337));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsOverlappedInt_ReturnsInt(dynamic instance)
+        {
+            Assert.Equal(1337, instance.NestedMethodWithNonOverlappedT_AcceptsOverlappedInt_ReturnsInt(1337));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString(dynamic instance)
+        {
+            Assert.Equal("foobar", instance.NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString("foobar"));
+        }
+
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(dynamic instance)
+        {
+            Assert.True(instance.NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 31337));
+            Assert.False(instance.NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 1337));
+        }
+        
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsStringAndInt_ReturnsEquality(dynamic instance)
+        {
+            Assert.False(instance.NestedMethodWithNonOverlappedT_AcceptsStringAndInt_ReturnsEquality("1337", 1337));
+        }
+        
+        [Theory, MemberData(nameof(Instances))]
+        public void NestedMethodWithNonOverlappedT_AcceptsTwoStringsAsDifferentGenerics_ReturnsEquality(dynamic instance)
+        {
+            Assert.True(instance.NestedMethodWithNonOverlappedT_AcceptsTwoStringsAsDifferentGenerics_ReturnsEquality("1337", "1337"));
+            Assert.False(instance.NestedMethodWithNonOverlappedT_AcceptsTwoStringsAsDifferentGenerics_ReturnsEquality("1337", "31337"));
+        }
     }
 }

@@ -183,25 +183,6 @@ namespace GenericSpecialization.Fody
             return instance;
         }
         
-        private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self, List<SpecializationInfo> specializations,
-            params TypeReference[] arguments) 
-        {
-            var reference = new MethodReference(self.Name, self.ReturnType, MakeGenericType(self.DeclaringType, arguments))
-            {
-                HasThis = self.HasThis,
-                ExplicitThis = self.ExplicitThis,
-                CallingConvention = self.CallingConvention
-            };
-
-            foreach (var parameter in self.Parameters)
-                reference.Parameters.Add(new ParameterDefinition(FindSpecializedType(parameter.ParameterType, specializations)));
-
-            foreach (var genericParameter in self.GenericParameters)
-                reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
-
-            return reference;
-        }
-        
         private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self, SpecializationScope scope,
             params TypeReference[] arguments) 
         {
