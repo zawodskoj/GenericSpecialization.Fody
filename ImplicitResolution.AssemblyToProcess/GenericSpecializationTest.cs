@@ -14,10 +14,12 @@ namespace ImplicitResolution.AssemblyToProcess
         public void Method_AcceptsT(T t) {}
         public T Method_AcceptsT_ReturnsT(T t) => t;
         public bool Method_AcceptsTwoT_ReturnsEquality(T t1, T t2) => t1.Equals(t2);
+        
+        public bool Method_AcceptsTAndT2_ReturnsEquality<T2>(T t1, T2 t2) => t1.Equals(t2);
     }
     
     [GenerateSpecialization(typeof(int))]
-    public class GenericStructuralClass<T> where T : struct, IEquatable<T>
+    public struct GenericStructuralClass<T> where T : struct, IEquatable<T>
     {
         public T Method_AcceptsT_ReturnsT(T t) => t;
         public bool Method_AcceptsTwoT_ReturnsEquality(T t1, T t2) => t1.Equals(t2);
@@ -32,13 +34,17 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClass<string>().Method_AcceptsT_ReturnsT(s);
         public bool Method_AcceptsTwoStrings_ReturnsEquality(string s1, string s2) 
             => new GenericClass<string>().Method_AcceptsTwoT_ReturnsEquality(s1, s2);
-        
+        public bool Method_AcceptsStringAndT_ReturnsEquality<T>(string s1, T s2) 
+            => new GenericClass<string>().Method_AcceptsTAndT2_ReturnsEquality(s1, s2);
+
         public void Method_AcceptsInt() 
             => new GenericClass<int>().Method_AcceptsT(1337);
         public int Method_AcceptsInt_ReturnsInt(int s) 
             => new GenericClass<int>().Method_AcceptsT_ReturnsT(s);
         public bool Method_AcceptsTwoInts_ReturnsEquality(int s1, int s2) 
             => new GenericClass<int>().Method_AcceptsTwoT_ReturnsEquality(s1, s2);
+        public bool Method_AcceptsIntAndT_ReturnsEquality<T>(int s1, T s2) 
+            => new GenericClass<int>().Method_AcceptsTAndT2_ReturnsEquality(s1, s2);
         
         public int StructuralMethod_AcceptsInt_ReturnsInt(int s) 
             => new GenericStructuralClass<int>().Method_AcceptsT_ReturnsT(s);
