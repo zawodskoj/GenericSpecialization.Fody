@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Fody;
 using Xunit;
 
@@ -14,7 +15,7 @@ namespace GenericSpecialization.Tests
         {
             var weavingTask = new Fody.ModuleWeaver();
             var testResult = weavingTask.ExecuteTestRun(
-                "GenericSpecialization.AssemblyToProcess.dll",
+                Path.Combine(Directory.GetCurrentDirectory(), "GenericSpecialization.AssemblyToProcess.dll"),
                 false);
             
             var specType = testResult.Assembly.GetType("GenericSpecialization.AssemblyToProcess.GenericSpecializationTest_Specialized");

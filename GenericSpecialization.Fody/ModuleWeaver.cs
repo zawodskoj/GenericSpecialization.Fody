@@ -168,9 +168,9 @@ namespace GenericSpecialization.Fody
         {
             if (!type.HasGenericParameters) throw new NotSupportedException();
             if (type.GenericParameters.Count > 1) throw new NotImplementedException();
-            
-            var specializedType = new TypeDefinition(type.Namespace, 
-                type.Name + "$specialized$" + specializedArgument.FullName, 
+
+            var specializedType = new TypeDefinition(type.Namespace,
+                type.Name + "$specialized$" + specializedArgument.FullName,
                 type.Attributes,
                 type.BaseType);
             
