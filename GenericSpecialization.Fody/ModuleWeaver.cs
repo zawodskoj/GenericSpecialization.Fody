@@ -74,7 +74,7 @@ namespace GenericSpecialization.Fody
 
             if (specializations.SingleOrDefault(x =>
                         x.GenericClass == decl &&
-                        x.Specialization == genericInstanceType.GenericArguments[0]) is SpecializationInfo specialization)
+                        MetadataComparer.AreSame(x.Specialization, genericInstanceType.GenericArguments[0])) is SpecializationInfo specialization)
                 return specialization.SpecializedClass;
             else
                 return type;
