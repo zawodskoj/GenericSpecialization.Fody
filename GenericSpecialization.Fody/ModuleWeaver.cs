@@ -232,10 +232,13 @@ namespace GenericSpecialization.Fody
         
         private MethodDefinition SpecializeMethod(MethodDefinition method, SpecializationScope scope)
         {
-            if (method.HasGenericParameters) throw new NotImplementedException();
-            
             var newMethod = new MethodDefinition(method.Name, method.Attributes, 
                 GetSpecializedType(method.ReturnType, scope));
+
+            foreach (var genericParameter in method.GenericParameters)
+            {
+                newMethod.GenericParameters.Add(new GenericParameter(genericParameter.Name, newMethod));
+            }
 
             foreach (var parameter in method.Parameters)
             {

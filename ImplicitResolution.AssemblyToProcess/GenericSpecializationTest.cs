@@ -60,6 +60,8 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClass<string>().Method_AcceptsT_ReturnsT(s);
         public bool Method_AcceptsTwoStrings_ReturnsEquality(string s1, string s2) 
             => new GenericClass<string>().Method_AcceptsTwoT_ReturnsEquality(s1, s2);
+        public bool Method_AcceptsStringAndT_ReturnsEquality<T>(string s1, T s2) 
+            => new GenericClass<string>().Method_AcceptsTAndT2_ReturnsEquality(s1, s2);
         
         public void Method_AcceptsInt() 
             => new GenericClass<int>().Method_AcceptsT(1337);
@@ -67,6 +69,8 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClass<int>().Method_AcceptsT_ReturnsT(s);
         public bool Method_AcceptsTwoInts_ReturnsEquality(int s1, int s2) 
             => new GenericClass<int>().Method_AcceptsTwoT_ReturnsEquality(s1, s2);
+        public bool Method_AcceptsIntAndT_ReturnsEquality<T>(int s1, T s2) 
+            => new GenericClass<int>().Method_AcceptsTAndT2_ReturnsEquality(s1, s2);
         
         public int StructuralMethod_AcceptsInt_ReturnsInt(int s) 
             => new GenericStructuralClass<int>().Method_AcceptsT_ReturnsT(s);

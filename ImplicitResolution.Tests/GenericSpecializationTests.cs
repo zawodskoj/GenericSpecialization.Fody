@@ -46,9 +46,9 @@ namespace ImplicitResolution.Tests
         [Theory, MemberData(nameof(Instances))]
         public void Method_AcceptsStringAndT_ReturnsEquality(dynamic instance)
         {
-            Assert.False(instance.Method_AcceptsStringAndT_ReturnsEquality<string>(1337, "foobar"));
-            Assert.False(instance.Method_AcceptsStringAndT_ReturnsEquality<int>(1337, 31337));
-            Assert.True(instance.Method_AcceptsStringAndT_ReturnsEquality<int>(1337, 1337));
+            Assert.False(instance.Method_AcceptsStringAndT_ReturnsEquality<int>("foobar", 1337));
+            Assert.False(instance.Method_AcceptsStringAndT_ReturnsEquality<string>("foobar", "not foobar"));
+            Assert.True(instance.Method_AcceptsStringAndT_ReturnsEquality<string>("foobar", "foobar"));
         }
 
         [Theory, MemberData(nameof(Instances))]
@@ -62,9 +62,9 @@ namespace ImplicitResolution.Tests
         [Theory, MemberData(nameof(Instances))]
         public void Method_AcceptsIntAndT_ReturnsEquality(dynamic instance)
         {
-            Assert.False(instance.Method_AcceptsStringAndT_ReturnsEquality<int>("foobar", 1337));
-            Assert.False(instance.Method_AcceptsStringAndT_ReturnsEquality<string>("foobar", "not foobar"));
-            Assert.True(instance.Method_AcceptsStringAndT_ReturnsEquality<string>("foobar", "foobar"));
+            Assert.False(instance.Method_AcceptsIntAndT_ReturnsEquality<string>(1337, "foobar"));
+            Assert.False(instance.Method_AcceptsIntAndT_ReturnsEquality<int>(1337, 31337));
+            Assert.True(instance.Method_AcceptsIntAndT_ReturnsEquality<int>(1337, 1337));
         }
         
         [Theory, MemberData(nameof(Instances))]
