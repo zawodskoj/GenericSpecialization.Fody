@@ -139,8 +139,10 @@ namespace GenericSpecialization.Fody
         private MethodReference InsertRemainingGenerics(MethodReference methodReference, 
             GenericInstanceType genericInstanceType)
         {
-            return MakeGenericTypeNonGenericMethod(methodReference,
-                genericInstanceType.GenericArguments.Skip(1).ToArray());
+            if (genericInstanceType.GenericArguments.Count > 1)
+                return MakeGenericTypeNonGenericMethod(methodReference,
+                    genericInstanceType.GenericArguments.Skip(1).ToArray());
+            return methodReference;
         }
 
         private class SpecializationScope
