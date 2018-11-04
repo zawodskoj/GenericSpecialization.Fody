@@ -107,8 +107,8 @@ namespace ImplicitResolution.Tests
         [Theory, MemberData(nameof(Instances))]
         public void NestedMethod_AcceptsTwoInts_ReturnsEquality(dynamic instance)
         {
-            Assert.True(instance.NestedMethod_AcceptsTwoInts_ReturnsEquality(1337, 31337));
-            Assert.False(instance.NestedMethod_AcceptsTwoInts_ReturnsEquality(1337, 1337));
+            Assert.False(instance.NestedMethod_AcceptsTwoInts_ReturnsEquality(1337, 31337));
+            Assert.True(instance.NestedMethod_AcceptsTwoInts_ReturnsEquality(1337, 1337));
         }
         
         
@@ -133,8 +133,8 @@ namespace ImplicitResolution.Tests
         [Theory, MemberData(nameof(Instances))]
         public void NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(dynamic instance)
         {
-            Assert.True(instance.NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 31337));
-            Assert.False(instance.NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 1337));
+            Assert.False(instance.NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 31337));
+            Assert.True(instance.NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 1337));
         }
         
         
@@ -163,10 +163,10 @@ namespace ImplicitResolution.Tests
         }
 
         [Theory, MemberData(nameof(Instances))]
-        public void NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(dynamic instance)
+        public void NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality(dynamic instance)
         {
-            Assert.True(instance.NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 31337));
-            Assert.False(instance.NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(1337, 1337));
+            Assert.False(instance.NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality("1337", "31337"));
+            Assert.True(instance.NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality("1337", "1337"));
         }
         
         [Theory, MemberData(nameof(Instances))]

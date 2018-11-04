@@ -108,7 +108,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
         public string NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
-        public bool NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(string a, string b)
+        public bool NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality(string a, string b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsTwoT_ReturnsEquality(a, b);
         public bool NestedMethodWithNonOverlappedT_AcceptsStringAndInt_ReturnsEquality(string a, int b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsTAndT2_ReturnsEquality(a, b);
@@ -167,7 +167,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
         public string NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
-        public bool NestedMethodWithNonOverlappedT_AcceptsTwoInts_ReturnsEquality(string a, string b)
+        public bool NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality(string a, string b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsTwoT_ReturnsEquality(a, b);
         public bool NestedMethodWithNonOverlappedT_AcceptsStringAndInt_ReturnsEquality(string a, int b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsTAndT2_ReturnsEquality(a, b);
