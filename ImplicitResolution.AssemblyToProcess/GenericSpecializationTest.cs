@@ -58,7 +58,7 @@ namespace ImplicitResolution.AssemblyToProcess
         public bool Method_AcceptsTwoT_ReturnsEquality(T t1, T t2) => t1.Equals(t2);
     }
     
-//    [InjectSpecializations]
+    [InjectSpecializations]
     public class GenericSpecializationTest_Specialized
     {
         public void Method_AcceptsString() 

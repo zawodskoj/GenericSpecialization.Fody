@@ -14,20 +14,23 @@ namespace GenericSpecialization.Fody
         private class SpecializationInfo
         {
             public SpecializationInfo(TypeDefinition genericClass, TypeReference specialization,
-                TypeDefinition specializedClass, Dictionary<MethodReference, MethodReference> specializedMethods)
+                TypeDefinition specializedClass, Dictionary<MethodReference, MethodReference> specializedMethods,
+                List<SpecializationInfo> nestedClasses)
             {
                 GenericClass = genericClass;
                 Specialization = specialization;
                 SpecializedClass = specializedClass;
                 SpecializedMethods = specializedMethods;
+                NestedClasses = nestedClasses;
             }
 
             public TypeDefinition GenericClass { get; }
             public TypeReference Specialization { get; }
             public TypeDefinition SpecializedClass { get; }
             public Dictionary<MethodReference, MethodReference> SpecializedMethods { get; }
+            public List<SpecializationInfo> NestedClasses { get; }
         }
-        
+
         public override void Execute()
         {
             var generateSpecializationAttributeType =
@@ -48,13 +51,25 @@ namespace GenericSpecialization.Fody
                     specializations.Add(GenerateSpecialization(type, typeref));
                 }
             }
+
+            var flattenedSpecializations = FlattenSpecializations(specializations).ToList();
             
             foreach (var type in ModuleDefinition.Types.ToArray())
             {
                 if (type.CustomAttributes.Any(x => x.AttributeType.Resolve() == injectSpecializationsAttributeType))
                 {
-                    InjectSpecializations(type, specializations);
+                    InjectSpecializations(type, flattenedSpecializations);
                 }
+            }
+        }
+
+        private IEnumerable<SpecializationInfo> FlattenSpecializations(List<SpecializationInfo> specializations)
+        {
+            foreach (var spec in specializations)
+            {
+                yield return spec;
+                foreach (var nested in FlattenSpecializations(spec.NestedClasses))
+                    yield return nested;
             }
         }
 
@@ -104,7 +119,7 @@ namespace GenericSpecialization.Fody
                                             y.Key.Resolve() == methodref.Resolve() &&
                                             MetadataComparer.AreSame(specializationArg, x.Specialization))
                                         is var pair && pair.Value != null
-                                        ? pair.Value
+                                        ? InsertRemainingGenerics(pair.Value, genericInstanceType)
                                         : null)
                                 .FirstOrDefault(x => x != null) ?? methodref);
                         if (methodref is GenericInstanceMethod genericInstanceMethod)
@@ -119,6 +134,13 @@ namespace GenericSpecialization.Fody
                         break;
                 }
             }
+        }
+
+        private MethodReference InsertRemainingGenerics(MethodReference methodReference, 
+            GenericInstanceType genericInstanceType)
+        {
+            return MakeGenericTypeNonGenericMethod(methodReference,
+                genericInstanceType.GenericArguments.Skip(1).ToArray());
         }
 
         private class SpecializationScope
@@ -152,10 +174,12 @@ namespace GenericSpecialization.Fody
             
             var scope = new SpecializationScope(type.GenericParameters[0], specializedArgument, null, type, specializedType);
 
+            var nestedInfos = new List<SpecializationInfo>();
             foreach (var nestedClass in type.NestedTypes)
             {
                 var specInfo = GenerateNestedClassSpecialization(nestedClass, scope);
                 specializedType.NestedTypes.Add(specInfo.SpecializedClass);
+                nestedInfos.Add(specInfo);
             }
             
             var methods = new Dictionary<MethodReference, MethodReference>();
@@ -168,7 +192,7 @@ namespace GenericSpecialization.Fody
             
             ModuleDefinition.Types.Add(specializedType);
 
-            return new SpecializationInfo(type, specializedArgument, specializedType, methods);
+            return new SpecializationInfo(type, specializedArgument, specializedType, methods, nestedInfos);
         }
         
         private SpecializationInfo GenerateNestedClassSpecialization(TypeDefinition type, SpecializationScope parentScope)
@@ -199,22 +223,22 @@ namespace GenericSpecialization.Fody
                 specializedType.Methods.Add(newMethod);
             }
             
-            return new SpecializationInfo(type, scope.SpecializedArgumentType, specializedType, methods);
+            return new SpecializationInfo(type, scope.SpecializedArgumentType, specializedType, methods, new List<SpecializationInfo>());
         }
 
-        private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope, int depth = 0)
+        private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope)
         {
             if (typeReference == scope.GenericArgumentType) return scope.SpecializedArgumentType;
             
             if (typeReference is GenericInstanceType genericInstanceType)
             {
                 return typeReference.Resolve().MakeGenericInstanceType(
-                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope, depth)).ToArray());
+                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope)).ToArray());
             }
             
             return scope.OuterScope == null 
-                ? depth == 0 ? typeReference : typeReference // todo
-                : GetSpecializedType(typeReference, scope.OuterScope, depth + 1);
+                ? typeReference
+                : GetSpecializedType(typeReference, scope.OuterScope);
         }
 
         private TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
@@ -241,6 +265,25 @@ namespace GenericSpecialization.Fody
 
             foreach (var parameter in self.Parameters)
                 reference.Parameters.Add(new ParameterDefinition(GetSpecializedType(parameter.ParameterType, scope)));
+
+            foreach (var genericParameter in self.GenericParameters)
+                reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
+
+            return reference;
+        }
+
+        private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self,
+            params TypeReference[] arguments) 
+        {
+            var reference = new MethodReference(self.Name, self.ReturnType, MakeGenericType(self.DeclaringType, arguments))
+            {
+                HasThis = self.HasThis,
+                ExplicitThis = self.ExplicitThis,
+                CallingConvention = self.CallingConvention
+            };
+
+            foreach (var parameter in self.Parameters)
+                reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
 
             foreach (var genericParameter in self.GenericParameters)
                 reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
