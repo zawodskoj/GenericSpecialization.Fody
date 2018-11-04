@@ -123,14 +123,17 @@ namespace GenericSpecialization.Fody
 
         private class SpecializationScope
         {
-            public SpecializationScope(TypeReference genericArgumentType, TypeReference specializedArgumentType)
+            public SpecializationScope(TypeReference genericArgumentType, TypeReference specializedArgumentType,
+                SpecializationScope outerScope)
             {
                 GenericArgumentType = genericArgumentType;
                 SpecializedArgumentType = specializedArgumentType;
+                OuterScope = outerScope;
             }
 
             public TypeReference GenericArgumentType { get; }
             public TypeReference SpecializedArgumentType { get; }
+            public SpecializationScope OuterScope { get; }
         }
 
         private SpecializationInfo GenerateSpecialization(TypeDefinition type, TypeReference specializedArgument)
@@ -143,8 +146,14 @@ namespace GenericSpecialization.Fody
                 type.Attributes,
                 type.BaseType);
             
-            var scope = new SpecializationScope(type.GenericParameters[0], specializedArgument);
+            var scope = new SpecializationScope(type.GenericParameters[0], specializedArgument, null);
 
+            foreach (var nestedClass in type.NestedTypes)
+            {
+                var specInfo = GenerateNestedClassSpecialization(nestedClass, scope);
+                specializedType.NestedTypes.Add(specInfo.SpecializedClass);
+            }
+            
             var methods = new Dictionary<MethodReference, MethodReference>();
             foreach (var method in type.Methods)
             {
@@ -156,6 +165,36 @@ namespace GenericSpecialization.Fody
             ModuleDefinition.Types.Add(specializedType);
 
             return new SpecializationInfo(type, specializedArgument, specializedType, methods);
+        }
+        
+        private SpecializationInfo GenerateNestedClassSpecialization(TypeDefinition type, SpecializationScope parentScope)
+        {
+            if (!type.HasGenericParameters)
+                throw new NotSupportedException();
+            
+            var specializedType = new TypeDefinition(type.Namespace, 
+                type.Name, 
+                type.Attributes,
+                type.BaseType);
+            
+            // todo nested classes
+
+            foreach (var genericParameter in type.GenericParameters.Skip(1)) // skipping specialized parameter
+            {
+                specializedType.GenericParameters.Add(new GenericParameter(genericParameter.Name, specializedType));
+            }
+            
+            var scope = new SpecializationScope(type.GenericParameters[0], parentScope.SpecializedArgumentType, parentScope);
+            
+            var methods = new Dictionary<MethodReference, MethodReference>();
+            foreach (var method in type.Methods)
+            {
+                var newMethod = SpecializeMethod(method, scope);
+                methods.Add(method, newMethod);
+                specializedType.Methods.Add(newMethod);
+            }
+            
+            return new SpecializationInfo(type, scope.SpecializedArgumentType, specializedType, methods);
         }
 
         private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope)
