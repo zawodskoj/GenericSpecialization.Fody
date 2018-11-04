@@ -98,15 +98,24 @@ namespace GenericSpecialization.Fody
                     case MethodReference methodref:
                         if (!(methodref.DeclaringType is GenericInstanceType genericInstanceType)) break;
                         var specializationArg = genericInstanceType.GenericArguments[0];
-                        instruction.Operand = ModuleDefinition.ImportReference(
+                        var newref = ModuleDefinition.ImportReference(
                             specializations.Select(x =>
                                     x.SpecializedMethods.FirstOrDefault(y =>
-                                            MetadataComparer.AreSame(y.Key, methodref, true) &&
+                                            y.Key.Resolve() == methodref.Resolve() &&
                                             MetadataComparer.AreSame(specializationArg, x.Specialization))
                                         is var pair && pair.Value != null
                                         ? pair.Value
                                         : null)
                                 .FirstOrDefault(x => x != null) ?? methodref);
+                        if (methodref is GenericInstanceMethod genericInstanceMethod)
+                        {
+                            var newGenericMethod = new GenericInstanceMethod(newref);
+                            foreach (var argument in genericInstanceMethod.GenericArguments)
+                                newGenericMethod.GenericArguments.Add(FindSpecializedType(argument, specializations));
+                            newref = newGenericMethod;
+                        }
+
+                        instruction.Operand = newref;
                         break;
                 }
             }
