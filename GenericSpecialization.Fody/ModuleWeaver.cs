@@ -36,7 +36,9 @@ namespace GenericSpecialization.Fody
                 ModuleDefinition.ImportReference(typeof(InjectSpecializationsAttribute)).Resolve();
             
             var specializations = new List<SpecializationInfo>();
-            
+
+            Debugger.Launch();
+
             foreach (var type in ModuleDefinition.Types.ToArray())
             {
                 foreach (var genAttr in type.CustomAttributes.Where(x =>
@@ -46,8 +48,6 @@ namespace GenericSpecialization.Fody
                     specializations.Add(GenerateSpecialization(type, typeref));
                 }
             }
-
-            Debugger.Launch();
             
             foreach (var type in ModuleDefinition.Types.ToArray())
             {
@@ -124,15 +124,19 @@ namespace GenericSpecialization.Fody
         private class SpecializationScope
         {
             public SpecializationScope(TypeReference genericArgumentType, TypeReference specializedArgumentType,
-                SpecializationScope outerScope)
+                SpecializationScope outerScope, TypeDefinition genericType, TypeDefinition specializedType)
             {
                 GenericArgumentType = genericArgumentType;
                 SpecializedArgumentType = specializedArgumentType;
                 OuterScope = outerScope;
+                GenericType = genericType;
+                SpecializedType = specializedType;
             }
 
             public TypeReference GenericArgumentType { get; }
             public TypeReference SpecializedArgumentType { get; }
+            public TypeDefinition GenericType { get; }
+            public TypeDefinition SpecializedType { get; }
             public SpecializationScope OuterScope { get; }
         }
 
@@ -146,7 +150,7 @@ namespace GenericSpecialization.Fody
                 type.Attributes,
                 type.BaseType);
             
-            var scope = new SpecializationScope(type.GenericParameters[0], specializedArgument, null);
+            var scope = new SpecializationScope(type.GenericParameters[0], specializedArgument, null, type, specializedType);
 
             foreach (var nestedClass in type.NestedTypes)
             {
@@ -184,7 +188,8 @@ namespace GenericSpecialization.Fody
                 specializedType.GenericParameters.Add(new GenericParameter(genericParameter.Name, specializedType));
             }
             
-            var scope = new SpecializationScope(type.GenericParameters[0], parentScope.SpecializedArgumentType, parentScope);
+            var scope = new SpecializationScope(type.GenericParameters[0], parentScope.SpecializedArgumentType, parentScope,
+                type, specializedType);
             
             var methods = new Dictionary<MethodReference, MethodReference>();
             foreach (var method in type.Methods)
@@ -197,19 +202,21 @@ namespace GenericSpecialization.Fody
             return new SpecializationInfo(type, scope.SpecializedArgumentType, specializedType, methods);
         }
 
-        private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope)
+        private TypeReference GetSpecializedType(TypeReference typeReference, SpecializationScope scope, int depth = 0)
         {
             if (typeReference == scope.GenericArgumentType) return scope.SpecializedArgumentType;
             
             if (typeReference is GenericInstanceType genericInstanceType)
             {
                 return typeReference.Resolve().MakeGenericInstanceType(
-                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope)).ToArray());
+                    genericInstanceType.GenericArguments.Select(x => GetSpecializedType(x, scope, depth)).ToArray());
             }
             
-            return typeReference;
+            return scope.OuterScope == null 
+                ? depth == 0 ? typeReference : typeReference // todo
+                : GetSpecializedType(typeReference, scope.OuterScope, depth + 1);
         }
-        
+
         private TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
         {
             if (self.GenericParameters.Count != arguments.Length)
@@ -258,24 +265,57 @@ namespace GenericSpecialization.Fody
 
             return reference;
         }
+
+        private TypeReference GetValidTypeForGenericScope(TypeReference typeref, IGenericParameterProvider oldOwner,
+            IEnumerable<GenericParameter> parameters)
+        {
+            if (typeref is GenericParameter genp &&
+                genp.Owner == oldOwner &&
+                parameters.FirstOrDefault(x => x.Name == genp.Name) is GenericParameter newGenericParam)
+            {
+                return newGenericParam;
+            }
+            else
+            {
+                return typeref;
+            }
+        }
+        
+        private TypeReference GetValidTypeForGenericScope(TypeReference typeref, SpecializationScope scope)
+        {
+            if (typeref is GenericParameter genp &&
+                genp.Owner == scope.GenericType &&
+                scope.SpecializedType.GenericParameters.FirstOrDefault(x => x.Name == genp.Name) is GenericParameter newGenericParam)
+            {
+                return newGenericParam;
+            }
+            else
+            {
+                return scope.OuterScope == null ? typeref : GetValidTypeForGenericScope(typeref, scope.OuterScope);
+            }
+        }
         
         private MethodDefinition SpecializeMethod(MethodDefinition method, SpecializationScope scope)
         {
-            var newMethod = new MethodDefinition(method.Name, method.Attributes, 
-                GetSpecializedType(method.ReturnType, scope));
+            var newMethod = new MethodDefinition(method.Name, method.Attributes, GetSpecializedType(method.ReturnType, scope));
 
             foreach (var genericParameter in method.GenericParameters)
             {
                 newMethod.GenericParameters.Add(new GenericParameter(genericParameter.Name, newMethod));
             }
 
+            newMethod.ReturnType = GetValidTypeForGenericScope(newMethod.ReturnType, method, newMethod.GenericParameters);
+            newMethod.ReturnType = GetValidTypeForGenericScope(newMethod.ReturnType, scope);
+            
             foreach (var parameter in method.Parameters)
             {
                 newMethod.Parameters.Add(
                     new ParameterDefinition(
                         parameter.Name, 
                         parameter.Attributes, 
-                        GetSpecializedType(parameter.ParameterType, scope)));
+                        GetValidTypeForGenericScope(
+                            GetValidTypeForGenericScope(GetSpecializedType(parameter.ParameterType, scope), method, newMethod.GenericParameters),
+                            scope)));
             }
 
             if (!method.IsAbstract)
