@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericSpecialization.Assem
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericSpecialization.Fody", "GenericSpecialization.Fody\GenericSpecialization.Fody.csproj", "{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericSpecialization", "GenericSpecialization\GenericSpecialization.csproj", "{DDE5FE1F-CFE7-4351-A625-C8057C3E8753}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97F70E39-4A5B-4A1C-AB90-CBAB7C322C6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDE5FE1F-CFE7-4351-A625-C8057C3E8753}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDE5FE1F-CFE7-4351-A625-C8057C3E8753}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDE5FE1F-CFE7-4351-A625-C8057C3E8753}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDE5FE1F-CFE7-4351-A625-C8057C3E8753}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

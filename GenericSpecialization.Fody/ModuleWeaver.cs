@@ -418,18 +418,4 @@ namespace GenericSpecialization.Fody
             yield return "mscorlib";
         }
     }
-
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
-    public class GenerateSpecializationAttribute : Attribute
-    {
-        public Type SpecializationType { get; }
-        
-        public GenerateSpecializationAttribute(Type specializationType)
-        {
-            SpecializationType = specializationType;
-        }
-    }
-    
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public class InjectSpecializationsAttribute : Attribute {}
 }

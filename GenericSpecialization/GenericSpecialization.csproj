@@ -4,8 +4,4 @@
         <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\GenericSpecialization\GenericSpecialization.csproj" />
-    </ItemGroup>
-
 </Project>
