@@ -99,9 +99,9 @@ namespace ImplicitResolution.Tests
         }
 
         [Theory, MemberData(nameof(Instances))]
-        public void NestedMethod_AcceptsOverlappeString_ReturnsString(dynamic instance)
+        public void NestedMethod_AcceptsOverlappedString_ReturnsString(dynamic instance)
         {
-            Assert.Equal("foobar", instance.NestedMethod_AcceptsOverlappeString_ReturnsString("foobar"));
+            Assert.Equal("foobar", instance.NestedMethod_AcceptsOverlappedString_ReturnsString("foobar"));
         }
 
         [Theory, MemberData(nameof(Instances))]
@@ -125,9 +125,9 @@ namespace ImplicitResolution.Tests
         }
 
         [Theory, MemberData(nameof(Instances))]
-        public void NestedMethodWithOverlappedT_AcceptsOverlappeString_ReturnsString(dynamic instance)
+        public void NestedMethodWithOverlappedT_AcceptsOverlappedString_ReturnsString(dynamic instance)
         {
-            Assert.Equal("foobar", instance.NestedMethodWithOverlappedT_AcceptsOverlappeString_ReturnsString("foobar"));
+            Assert.Equal("foobar", instance.NestedMethodWithOverlappedT_AcceptsOverlappedString_ReturnsString("foobar"));
         }
 
         [Theory, MemberData(nameof(Instances))]
@@ -157,9 +157,9 @@ namespace ImplicitResolution.Tests
         }
 
         [Theory, MemberData(nameof(Instances))]
-        public void NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString(dynamic instance)
+        public void NestedMethodWithNonOverlappedT_AcceptsOverlappedString_ReturnsString(dynamic instance)
         {
-            Assert.Equal("foobar", instance.NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString("foobar"));
+            Assert.Equal("foobar", instance.NestedMethodWithNonOverlappedT_AcceptsOverlappedString_ReturnsString("foobar"));
         }
 
         [Theory, MemberData(nameof(Instances))]

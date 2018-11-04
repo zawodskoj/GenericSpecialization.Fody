@@ -88,7 +88,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsT_ReturnsT(s);
         public int NestedMethod_AcceptsOverlappedInt_ReturnsInt(int s)
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsOverlappedT_ReturnsT(s);
-        public string NestedMethod_AcceptsOverlappeString_ReturnsString(string s)
+        public string NestedMethod_AcceptsOverlappedString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsOverlappedT_ReturnsT(s);
         public bool NestedMethod_AcceptsTwoInts_ReturnsEquality(int a, int b)
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsTwoT_ReturnsEquality(a, b);
@@ -97,7 +97,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsT_ReturnsT(s);
         public int NestedMethodWithOverlappedT_AcceptsOverlappedInt_ReturnsInt(int s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
-        public string NestedMethodWithOverlappedT_AcceptsOverlappeString_ReturnsString(string s)
+        public string NestedMethodWithOverlappedT_AcceptsOverlappedString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
         public bool NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(int a, int b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsTwoT_ReturnsEquality(a, b);
@@ -106,7 +106,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsT_ReturnsT(s);
         public int NestedMethodWithNonOverlappedT_AcceptsOverlappedInt_ReturnsInt(int s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
-        public string NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString(string s)
+        public string NestedMethodWithNonOverlappedT_AcceptsOverlappedString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
         public bool NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality(string a, string b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsTwoT_ReturnsEquality(a, b);
@@ -147,7 +147,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsT_ReturnsT(s);
         public int NestedMethod_AcceptsOverlappedInt_ReturnsInt(int s)
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsOverlappedT_ReturnsT(s);
-        public string NestedMethod_AcceptsOverlappeString_ReturnsString(string s)
+        public string NestedMethod_AcceptsOverlappedString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsOverlappedT_ReturnsT(s);
         public bool NestedMethod_AcceptsTwoInts_ReturnsEquality(int a, int b)
             => new GenericClassWithNestedClasses<int>.NestedClass().Method_AcceptsTwoT_ReturnsEquality(a, b);
@@ -156,7 +156,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsT_ReturnsT(s);
         public int NestedMethodWithOverlappedT_AcceptsOverlappedInt_ReturnsInt(int s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
-        public string NestedMethodWithOverlappedT_AcceptsOverlappeString_ReturnsString(string s)
+        public string NestedMethodWithOverlappedT_AcceptsOverlappedString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
         public bool NestedMethodWithOverlappedT_AcceptsTwoInts_ReturnsEquality(int a, int b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassOverlapping<int>().Method_AcceptsTwoT_ReturnsEquality(a, b);
@@ -165,7 +165,7 @@ namespace ImplicitResolution.AssemblyToProcess
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsT_ReturnsT(s);
         public int NestedMethodWithNonOverlappedT_AcceptsOverlappedInt_ReturnsInt(int s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
-        public string NestedMethodWithNonOverlappedT_AcceptsOverlappeString_ReturnsString(string s)
+        public string NestedMethodWithNonOverlappedT_AcceptsOverlappedString_ReturnsString(string s)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsOverlappedT_ReturnsT(s);
         public bool NestedMethodWithNonOverlappedT_AcceptsTwoStrings_ReturnsEquality(string a, string b)
             => new GenericClassWithNestedClasses<string>.NestedGenericClassNonOverlapping<int>().Method_AcceptsTwoT_ReturnsEquality(a, b);
