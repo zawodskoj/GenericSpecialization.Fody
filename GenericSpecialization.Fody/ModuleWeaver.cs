@@ -122,7 +122,7 @@ namespace GenericSpecialization.Fody
                                         ? InsertRemainingGenerics(pair.Value, genericInstanceType)
                                         : null)
                                 .FirstOrDefault(x => x != null) ?? methodref);
-                        if (methodref is GenericInstanceMethod genericInstanceMethod)
+                        if (methodref is GenericInstanceMethod genericInstanceMethod && newref != methodref)
                         {
                             var newGenericMethod = new GenericInstanceMethod(newref);
                             foreach (var argument in genericInstanceMethod.GenericArguments)

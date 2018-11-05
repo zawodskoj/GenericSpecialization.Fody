@@ -12,7 +12,7 @@ namespace GenericSpecialization.AssemblyToProcess
             Func<T, T2> selector) => string.Join(s, items.Select(x => selector(x)));
     }
     
-    // [InjectSpecializations]
+    [InjectSpecializations]
     public class LambdaTest_Specialized
     {
         public string JoinSelectInts<T2>(string s, IEnumerable<int> ints, Func<int, T2> selector)
