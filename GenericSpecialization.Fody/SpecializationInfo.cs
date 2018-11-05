@@ -3,7 +3,7 @@ using Mono.Cecil;
 
 namespace GenericSpecialization.Fody
 {
-    public class SpecializationInfo
+    internal class SpecializationInfo
     {
         public SpecializationInfo(TypeDefinition genericClass, TypeReference specialization,
             TypeDefinition specializedClass, Dictionary<MethodReference, MethodReference> specializedMethods,

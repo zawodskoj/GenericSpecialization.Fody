@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Fody;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 
 namespace GenericSpecialization.Fody
 {
-    public partial class ModuleWeaver : BaseModuleWeaver
+    public class ModuleWeaver : BaseModuleWeaver
     {
         public override void Execute()
         {

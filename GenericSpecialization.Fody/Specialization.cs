@@ -7,7 +7,7 @@ using Mono.Cecil.Rocks;
 
 namespace GenericSpecialization.Fody
 {
-    public class Specializer
+    internal class Specializer
     {
         private readonly ModuleDefinition _moduleDefinition;
 
@@ -133,23 +133,12 @@ namespace GenericSpecialization.Fody
                 ? typeReference
                 : GetSpecializedType(typeReference, scope.OuterScope);
         }
-
-        private TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
-        {
-            if (self.GenericParameters.Count != arguments.Length)
-                throw new ArgumentException();
-
-            var instance = new GenericInstanceType(self);
-            foreach (var argument in arguments)
-                instance.GenericArguments.Add(argument);
-
-            return instance;
-        }
+        
         
         private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self, SpecializationScope scope,
             params TypeReference[] arguments) 
         {
-            var reference = new MethodReference(self.Name, self.ReturnType, MakeGenericType(self.DeclaringType, arguments))
+            var reference = new MethodReference(self.Name, self.ReturnType, self.DeclaringType.MakeGenericInstanceType(arguments))
             {
                 HasThis = self.HasThis,
                 ExplicitThis = self.ExplicitThis,

@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 
 namespace GenericSpecialization.Fody
 {
-    public class Injector
+    internal class Injector
     {
         private readonly ModuleDefinition _moduleDefinition;
 
@@ -20,6 +22,8 @@ namespace GenericSpecialization.Fody
                 _moduleDefinition.ImportReference(typeof(InjectSpecializationsAttribute)).Resolve();
 
             var flattenedSpecializations = FlattenSpecializations(specializations).ToList();
+            
+            Debugger.Launch();
             
             foreach (var type in _moduleDefinition.Types.ToArray())
             {
@@ -91,10 +95,9 @@ namespace GenericSpecialization.Fody
                                 .FirstOrDefault(x => x != null) ?? methodref);
                         if (methodref is GenericInstanceMethod genericInstanceMethod && newref != methodref)
                         {
-                            var newGenericMethod = new GenericInstanceMethod(newref);
-                            foreach (var argument in genericInstanceMethod.GenericArguments)
-                                newGenericMethod.GenericArguments.Add(FindSpecializedType(argument, specializations));
-                            newref = newGenericMethod;
+                            newref = newref.MakeGenericInstanceMethod(
+                                genericInstanceMethod.GenericArguments
+                                    .Select(x => FindSpecializedType(x, specializations)).ToArray());
                         }
 
                         instruction.Operand = newref;
@@ -102,45 +105,12 @@ namespace GenericSpecialization.Fody
                 }
             }
         }
-        
-        private TypeReference MakeGenericType(TypeReference self, params TypeReference[] arguments)
-        {
-            if (self.GenericParameters.Count != arguments.Length)
-                throw new ArgumentException();
-
-            var instance = new GenericInstanceType(self);
-            foreach (var argument in arguments)
-                instance.GenericArguments.Add(argument);
-
-            return instance;
-        }
-
-        private MethodReference MakeGenericTypeNonGenericMethod(MethodReference self,
-            params TypeReference[] arguments) 
-        {
-            var reference = new MethodReference(self.Name, self.ReturnType, MakeGenericType(self.DeclaringType, arguments))
-            {
-                HasThis = self.HasThis,
-                ExplicitThis = self.ExplicitThis,
-                CallingConvention = self.CallingConvention
-            };
-
-            foreach (var parameter in self.Parameters)
-                reference.Parameters.Add(new ParameterDefinition(parameter.ParameterType));
-
-            foreach (var genericParameter in self.GenericParameters)
-                reference.GenericParameters.Add(new GenericParameter(genericParameter.Name, reference));
-
-            return reference;
-        }
-
 
         private MethodReference InsertRemainingGenerics(MethodReference methodReference, 
             GenericInstanceType genericInstanceType)
         {
             if (genericInstanceType.GenericArguments.Count > 1)
-                return MakeGenericTypeNonGenericMethod(methodReference,
-                    genericInstanceType.GenericArguments.Skip(1).ToArray());
+                return methodReference.MakeMethodWithGenericDeclaringType(genericInstanceType.GenericArguments.Skip(1).ToArray());
             return methodReference;
         }
     }
